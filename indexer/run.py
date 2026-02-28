@@ -42,13 +42,14 @@ def _parse_page_range(toc_pages: str) -> tuple[int, int]:
 def run_toc(
     pdf_path: str,
     volume: str,
+    book_type: str,
     toc_pages: str,
     data_root: str,
     client,
     model: str = "gpt-5-mini-2025-08-07",
 ) -> None:
-    pages_dir = os.path.join(data_root, volume, "_pages")
-    toc_path = os.path.join(data_root, volume, "toc.json")
+    pages_dir = os.path.join(data_root, volume, book_type, "_pages")
+    toc_path = os.path.join(data_root, volume, book_type, "toc.json")
 
     print(f"Rendering PDF to images → {pages_dir}")
     all_pages = pdf_to_images(pdf_path, pages_dir)
@@ -80,6 +81,7 @@ def main() -> None:
         run_toc(
             pdf_path=args.pdf,
             volume=args.volume,
+            book_type=args.book_type,
             toc_pages=args.toc_pages,
             data_root=data_root,
             client=client,

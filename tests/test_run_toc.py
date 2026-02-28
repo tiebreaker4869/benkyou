@@ -94,12 +94,13 @@ def test_run_toc_creates_pages_dir(sample_pdf, tmp_path):
     run_toc(
         pdf_path=sample_pdf,
         volume="elementary-vol1",
+        book_type="textbook",
         toc_pages="2-3",
         data_root=data_dir,
         client=mock_client,
     )
 
-    pages_dir = os.path.join(data_dir, "elementary-vol1", "_pages")
+    pages_dir = os.path.join(data_dir, "elementary-vol1", "textbook", "_pages")
     assert os.path.isdir(pages_dir)
 
 
@@ -113,12 +114,13 @@ def test_run_toc_creates_toc_json(sample_pdf, tmp_path):
     run_toc(
         pdf_path=sample_pdf,
         volume="elementary-vol1",
+        book_type="textbook",
         toc_pages="2-3",
         data_root=data_dir,
         client=mock_client,
     )
 
-    toc_path = os.path.join(data_dir, "elementary-vol1", "toc.json")
+    toc_path = os.path.join(data_dir, "elementary-vol1", "textbook", "toc.json")
     assert os.path.isfile(toc_path)
 
     with open(toc_path, encoding="utf-8") as f:
@@ -140,6 +142,7 @@ def test_run_toc_only_sends_requested_pages_to_vlm(sample_pdf, tmp_path):
     run_toc(
         pdf_path=sample_pdf,
         volume="elementary-vol1",
+        book_type="textbook",
         toc_pages="2-3",   # pages 2 and 3 only
         data_root=data_dir,
         client=mock_client,
@@ -168,6 +171,7 @@ def test_run_toc_passes_model_to_extract_toc(sample_pdf, tmp_path):
     run_toc(
         pdf_path=sample_pdf,
         volume="elementary-vol1",
+        book_type="textbook",
         toc_pages="2-3",
         data_root=data_dir,
         client=mock_client,
@@ -188,6 +192,7 @@ def test_run_toc_prints_confirmation_prompt(sample_pdf, tmp_path, capsys):
     run_toc(
         pdf_path=sample_pdf,
         volume="elementary-vol1",
+        book_type="textbook",
         toc_pages="2-3",
         data_root=data_dir,
         client=mock_client,
