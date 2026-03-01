@@ -77,7 +77,7 @@ Exposes six tools:
 |------|-----------|---------|
 | `list_volumes` | `()` | Reads manifest.json, returns all imported volumes with metadata |
 | `list_lessons` | `(volume)` | Returns lesson numbers and titles for a volume |
-| `get_lesson` | `(volume, lesson, type)` | Returns full lesson Markdown (textbook or workbook) |
+| `get_lesson` | `(volume, lesson, book_type)` | Returns full lesson Markdown (textbook or workbook) |
 | `get_question_structure` | `(volume, lesson)` | Returns workbook question metadata: total 問題 count and sub-question counts |
 | `get_question` | `(volume, lesson, question_num)` | Returns a single 問題's full content |
 | `lookup_word` | `(word)` | Looks up a Japanese word in JMDict, returns reading / POS / meanings |

@@ -78,23 +78,23 @@ The full end-to-end pipeline is **complete and operational**:
 
 ## Test Coverage
 
-13 test files covering every module:
+13 test files, **75 tests total, all passing** (`uv run pytest tests/`):
 
-| Test File | Module Covered | Strategy |
-|---|---|---|
-| `test_pdf_to_images.py` | `pdf_to_images.py` | Real `pymupdf`, `tmp_path` |
-| `test_toc_extractor.py` | `toc_extractor.py` | Mock `client.chat.completions.create` |
-| `test_toc_writer.py` | `toc_writer.py` | Real file I/O, `tmp_path` |
-| `test_toc_reader.py` | `toc_reader.py` | Real file I/O |
-| `test_run_toc.py` | `run.py run_toc()` | Mock VLM |
-| `test_run_index.py` | `run.py run_index()` | Mock VLM |
-| `test_lesson_extractor.py` | `lesson_extractor.py` | Mock VLM |
-| `test_lesson_writer.py` | `lesson_writer.py` | Real file I/O |
-| `test_manifest_writer.py` | `manifest_writer.py` | Real file I/O |
-| `test_mcp_readers.py` | `readers.py` | Real file I/O, `tmp_path` |
-| `test_mcp_question_parser.py` | `question_parser.py` | Pure function, no mocks |
-| `test_mcp_lookup_word.py` | `dictionary.py` | Mock `_jam` singleton |
-| `test_mcp_server.py` | `server.py` | Integration with fixture data (`tmp_path`) |
+| Test File | Tests | Module Covered | Strategy |
+|---|---|---|---|
+| `test_pdf_to_images.py` | 5 | `pdf_to_images.py` | Real `pymupdf`, `tmp_path` |
+| `test_toc_extractor.py` | 9 | `toc_extractor.py` | Mock `client.chat.completions.create` |
+| `test_toc_writer.py` | 6 | `toc_writer.py` | Real file I/O, `tmp_path` |
+| `test_toc_reader.py` | 4 | `toc_reader.py` | Real file I/O |
+| `test_run_toc.py` | 7 | `run.py run_toc()` | Mock VLM |
+| `test_run_index.py` | 8 | `run.py run_index()` | Mock VLM; `retry_base_delay=0` for fast retries |
+| `test_lesson_extractor.py` | 8 | `lesson_extractor.py` | Mock VLM; real PNG via pymupdf |
+| `test_lesson_writer.py` | 4 | `lesson_writer.py` | Real file I/O |
+| `test_manifest_writer.py` | 5 | `manifest_writer.py` | Real file I/O |
+| `test_mcp_readers.py` | 5 | `readers.py` | Real file I/O, `tmp_path` |
+| `test_mcp_question_parser.py` | 5 | `question_parser.py` | Pure function, no mocks |
+| `test_mcp_lookup_word.py` | 3 | `dictionary.py` | Mock `_jam` singleton |
+| `test_mcp_server.py` | 4 | `server.py` | Integration with fixture data (`tmp_path`) |
 
 ---
 
