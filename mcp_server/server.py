@@ -9,6 +9,80 @@ from mcp_server.question_parser import extract_question, parse_question_structur
 from mcp_server.readers import read_lesson, read_manifest, read_toc
 
 
+def _browse_lesson_flow_instructions() -> str:
+    """Return discovery-based tutor workflow for browsing a lesson (used by tool)."""
+    return """\
+You are a Japanese tutor. The student wants to read a lesson.
+
+Steps:
+1. Call list_volumes() to get the exact volume identifiers available.
+2. If the student has not specified a volume, show the list and ask which one they want.
+3. Call list_lessons(volume=<chosen_volume>) to confirm available lesson numbers and titles.
+4. If the student has not specified a lesson, show the list and ask which one they want.
+5. Call get_lesson(volume=<chosen_volume>, lesson=<chosen_lesson>, book_type="textbook").
+6. Present the full content in order: 単語 → 文型 → 例文 → 会話 → 文法.
+   Do NOT skip or summarise any section.
+7. After presenting, invite the student to ask questions about any part.
+"""
+
+
+def _practice_lesson_flow_instructions() -> str:
+    """Return discovery-based tutor workflow for practicing a lesson (used by tool)."""
+    return """\
+You are a Japanese tutor. The student wants to practice a lesson.
+
+Steps:
+1. Call list_volumes() to get the exact volume identifiers available.
+2. If the student has not specified a volume, show the list and ask which one they want.
+3. Call list_lessons(volume=<chosen_volume>) to confirm available lesson numbers and titles.
+4. If the student has not specified a lesson, show the list and ask which one they want.
+5. Call get_question_structure(volume=<chosen_volume>, lesson=<chosen_lesson>) to learn the total number of 問題.
+6. For each 問題 in order (starting from 1):
+   a. Call get_question(volume=<chosen_volume>, lesson=<chosen_lesson>, question_num=N) and display the FULL content.
+   b. IMPORTANT — some sub-questions contain image description text instead of a real image.
+      Always display this content verbatim; never skip, hide, or omit it. It is part of the question.
+   c. Wait for the student to answer all sub-questions before giving any feedback.
+   d. Grade each sub-answer: correct → brief explanation; incorrect → correct answer + detailed explanation.
+   e. Wait for the student to acknowledge, then move to the next 問題.
+7. After all 問題 are done, give a brief summary of mistakes and suggestions.
+
+Do NOT reveal answers before the student responds. Do NOT skip any 問題 or sub-question.
+"""
+
+
+def _browse_lesson_instructions(volume: str, lesson: int) -> str:
+    """Return parameterized tutor workflow for browsing a lesson (used by prompt)."""
+    return f"""\
+You are a Japanese tutor. The student wants to read lesson {lesson} from {volume}.
+
+Steps:
+1. Call get_lesson(volume="{volume}", lesson={lesson}, book_type="textbook").
+2. Present the full content in order: 単語 → 文型 → 例文 → 会話 → 文法.
+   Do NOT skip or summarise any section.
+3. After presenting, invite the student to ask questions about any part.
+"""
+
+
+def _practice_lesson_instructions(volume: str, lesson: int) -> str:
+    """Return parameterized tutor workflow for practicing a lesson (used by prompt)."""
+    return f"""\
+You are a Japanese tutor. The student wants to practice lesson {lesson} from {volume}.
+
+Steps:
+1. Call get_question_structure(volume="{volume}", lesson={lesson}) to learn the total number of 問題.
+2. For each 問題 in order (starting from 1):
+   a. Call get_question(volume="{volume}", lesson={lesson}, question_num=N) and display the FULL content.
+   b. IMPORTANT — some sub-questions contain image description text instead of a real image.
+      Always display this content verbatim; never skip, hide, or omit it. It is part of the question.
+   c. Wait for the student to answer all sub-questions before giving any feedback.
+   d. Grade each sub-answer: correct → brief explanation; incorrect → correct answer + detailed explanation.
+   e. Wait for the student to acknowledge, then move to the next 問題.
+3. After all 問題 are done, give a brief summary of mistakes and suggestions.
+
+Do NOT reveal answers before the student responds. Do NOT skip any 問題 or sub-question.
+"""
+
+
 def create_server(data_dir: str = "data") -> FastMCP:
     """Create and return the MCP server instance."""
     server = FastMCP(name="benkyou")
@@ -78,6 +152,40 @@ def create_server(data_dir: str = "data") -> FastMCP:
     def lookup_word(word: str) -> dict | None:
         """Lookup a Japanese word in dictionary."""
         return lookup_word_in_dict(word)
+
+    @server.tool(
+        description=(
+            "Call this tool when the student wants to READ or BROWSE a lesson. "
+            "Returns step-by-step workflow instructions: first discover the correct "
+            "volume and lesson via list_volumes/list_lessons, then fetch and present "
+            "the full textbook lesson (単語→文型→例文→会話→文法) without skipping any section."
+        )
+    )
+    def browse_lesson_flow() -> str:
+        """Return tutor workflow instructions for browsing a textbook lesson."""
+        return _browse_lesson_flow_instructions()
+
+    @server.tool(
+        description=(
+            "Call this tool when the student wants to PRACTICE or DO EXERCISES for a lesson. "
+            "Returns step-by-step workflow instructions: first discover the correct volume "
+            "and lesson via list_volumes/list_lessons, then run an interactive workbook "
+            "practice session — present each 問題 one by one, wait for answers, grade with explanations."
+        )
+    )
+    def practice_lesson_flow() -> str:
+        """Return tutor workflow instructions for an interactive workbook practice session."""
+        return _practice_lesson_flow_instructions()
+
+    @server.prompt()
+    def browse_lesson(volume: str, lesson: int) -> str:
+        """Browse a full lesson (textbook)."""
+        return _browse_lesson_instructions(volume, lesson)
+
+    @server.prompt()
+    def practice_lesson(volume: str, lesson: int) -> str:
+        """Interactive practice session for a lesson (workbook)."""
+        return _practice_lesson_instructions(volume, lesson)
 
     return server
 

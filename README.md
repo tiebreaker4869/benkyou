@@ -110,7 +110,7 @@ data/
 
 ## MCP Server
 
-The MCP server exposes lesson data and a dictionary lookup to any MCP-compatible client over stdio transport.
+The MCP server exposes lesson data, dictionary lookup, and workflow-flow tools to any MCP-compatible client (Claude Desktop, Codex Desktop, Zed, Cursor, etc.) over stdio transport.
 
 ### Starting the Server
 
@@ -151,11 +151,53 @@ Add the following to your Claude Desktop config file:
 
 Replace `/absolute/path/to/benkyou` with your actual clone path. Restart Claude Desktop after saving.
 
+### Configuring Codex Desktop
+
+In Codex Desktop, go to **Settings → MCP → Connect to a custom MCP** and fill in:
+
+| Field | Value |
+|---|---|
+| Name | `benkyou` |
+| Transport | `STDIO` |
+| Command to launch | `/path/to/uv` (find with `which uv`) |
+| Arguments (one per line) | `--directory` → `/absolute/path/to/benkyou` → `run` → `python` → `-m` → `mcp_server.server` → `--data-dir` → `/absolute/path/to/benkyou/data` |
+| Working directory | `/absolute/path/to/benkyou` |
+
+### Configuring Zed
+
+Add to your Zed `settings.json`:
+
+```json
+{
+  "context_servers": {
+    "benkyou": {
+      "command": "/path/to/uv",
+      "args": [
+        "--directory",
+        "/absolute/path/to/benkyou",
+        "run",
+        "python",
+        "-m",
+        "mcp_server.server",
+        "--data-dir",
+        "/absolute/path/to/benkyou/data"
+      ]
+    }
+  }
+}
+```
+
+Zed also surfaces `browse_lesson` and `practice_lesson` as slash commands in the Agent Panel.
+
 ---
 
 ## Tool Reference
 
-The MCP server exposes six tools.
+The MCP server exposes eight tools and two prompts.
+
+**Data tools** (6): retrieve lesson content and dictionary entries.  
+**Workflow-flow tools** (2): no parameters — call these to start a browse or practice session. The returned instructions guide the model to first call `list_volumes()` / `list_lessons()` to discover the correct volume and lesson, then proceed. Works in any MCP client.  
+**Prompts** (2): for MCP clients that support prompts as slash commands (e.g. Zed). Take `volume` and `lesson` as explicit parameters supplied by the user.
 
 ---
 
@@ -187,6 +229,24 @@ list_volumes()
     "type": "textbook",
     "source_pdf": "./inbox/jpbook-junior-1.pdf",
     "generated_at": "2026-02-28",
+    "model": "gpt-5-mini-2025-08-07",
+    "lessons": 25,
+    "status": "complete"
+  },
+  {
+    "volume": "elementary-vol2",
+    "type": "workbook",
+    "source_pdf": "inbox/jpbook-junior-2-workbook.pdf",
+    "generated_at": "2026-03-01",
+    "model": "gpt-5-mini-2025-08-07",
+    "lessons": 25,
+    "status": "complete"
+  },
+  {
+    "volume": "elementary-vol2",
+    "type": "textbook",
+    "source_pdf": "inbox/jpbook-junior-2.pdf",
+    "generated_at": "2026-03-01",
     "model": "gpt-5-mini-2025-08-07",
     "lessons": 25,
     "status": "complete"
@@ -399,3 +459,48 @@ null
 - Returns only the **first** dictionary entry and the **first** sense when multiple exist.
 - `examples` is always an empty list (reserved for future use).
 - If the word has no kana form, the first kanji form is used as the reading.
+
+---
+
+### `browse_lesson_flow`
+
+Call this tool when the student wants to **read or browse a lesson**. Takes no parameters — the returned instructions guide the model to first call `list_volumes()` and `list_lessons()` to confirm the correct volume and lesson number, then fetch and present the full textbook content (単語→文型→例文→会話→文法) without skipping any section.
+
+**Parameters:** none
+
+**Example call:**
+```
+browse_lesson_flow()
+```
+
+**Returns:** A plain-text instruction string the model follows to execute the browse workflow.
+
+---
+
+### `practice_lesson_flow`
+
+Call this tool when the student wants to **practice or do exercises for a lesson**. Takes no parameters — the returned instructions guide the model to first call `list_volumes()` and `list_lessons()` to confirm the correct volume and lesson number, then run an interactive practice session: present each 問題 one by one, wait for answers, grade with explanations.
+
+> **Note:** Some sub-questions contain image description text (e.g. `- 图片描述（中文）：…`) instead of a real image. The workflow instructions explicitly require this text to be shown verbatim — it is part of the question and must not be skipped.
+
+**Parameters:** none
+
+**Example call:**
+```
+practice_lesson_flow()
+```
+
+**Returns:** A plain-text instruction string the model follows to execute the practice workflow.
+
+---
+
+### Prompts: `browse_lesson` / `practice_lesson`
+
+For MCP clients that support prompts as slash commands (currently **Zed**; Claude Desktop support is client-version dependent).
+
+| Prompt | Parameters | Behaviour |
+|---|---|---|
+| `browse_lesson` | `volume`, `lesson` | Parameterized browse workflow injected at conversation start |
+| `practice_lesson` | `volume`, `lesson` | Parameterized practice workflow injected at conversation start |
+
+The user supplies `volume` and `lesson` via the slash command UI (no discovery step needed). The model then calls `get_lesson` / `get_question_structure` / `get_question` directly with the provided values.

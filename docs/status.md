@@ -9,7 +9,7 @@
 The full end-to-end pipeline is **complete and operational**:
 
 - **Indexer**: All 9 modules implemented and tested. `elementary-vol1` (textbook + workbook, 25 lessons each) has been fully processed and written to `data/`.
-- **MCP Server**: All 6 tools implemented, registered, and tested. Server starts over stdio transport and is ready to connect to Claude Desktop.
+- **MCP Server**: 8 tools implemented, registered, and tested (6 data tools + 2 workflow-flow tools). Two MCP Prompts also registered for clients that support them. Server starts over stdio transport and is ready to connect to Claude Desktop, Codex Desktop, or Zed.
 
 ### Refactor Progress (from `docs/refactor.md`)
 
@@ -33,6 +33,11 @@ The full end-to-end pipeline is **complete and operational**:
     - `uv run pytest tests/test_run_index.py::test_run_index_retries_transient_failure -v` (1 passed)
     - `uv run pytest tests/test_mcp_lookup_word.py -v` (3 passed)
     - `uv run pytest tests/ -v` (75 passed)
+- **MCP Prompts + Flow Tools (completed)**:
+  - Added `browse_lesson` and `practice_lesson` as `@server.prompt()` for clients that support MCP Prompts (e.g. Zed); both take `(volume, lesson)` filled by the user via slash command UI.
+  - Added `browse_lesson_flow` and `practice_lesson_flow` as parameter-free `@server.tool()`, compatible with all MCP clients (Codex Desktop, Claude Desktop, Cursor, etc.). These return discovery-based instructions: the model first calls `list_volumes()` / `list_lessons()` to find the correct volume and lesson, then proceeds — preventing hallucinated volume names.
+  - Extracted four module-level instruction helpers as the single source of truth: `_browse_lesson_flow_instructions()`, `_practice_lesson_flow_instructions()`, `_browse_lesson_instructions(volume, lesson)`, `_practice_lesson_instructions(volume, lesson)`.
+  - Verified with `uv run pytest tests/test_mcp_server.py -v` (10 passed) and `uv run pytest tests/ -q` (80 passed).
 
 ---
 
@@ -56,7 +61,7 @@ The full end-to-end pipeline is **complete and operational**:
 
 | Module | Status | Purpose |
 |---|---|---|
-| `server.py` | Complete | Registers 6 tools via FastMCP; starts stdio transport |
+| `server.py` | Complete | Registers 8 tools + 2 prompts via FastMCP; starts stdio transport |
 | `readers.py` | Complete | File readers for manifest, toc, and lesson markdown |
 | `question_parser.py` | Complete | Parses workbook structure; normalizes full-width characters |
 | `dictionary.py` | Complete | Offline JMDict lookup via lazy `jamdict` singleton |
@@ -65,20 +70,22 @@ The full end-to-end pipeline is **complete and operational**:
 
 ## Data State
 
-| Volume | Type | Lessons Generated | Status |
-|---|---|---|---|
-| `elementary-vol1` | `textbook` | 25 | complete |
-| `elementary-vol1` | `workbook` | 25 | complete |
+| Volume | Type | Lessons Generated | Generated At | Status |
+|---|---|---|---|---|
+| `elementary-vol1` | `textbook` | 25 | 2026-02-28 | complete |
+| `elementary-vol1` | `workbook` | 25 | 2026-02-28 | complete |
+| `elementary-vol2` | `textbook` | 25 | 2026-03-01 | complete |
+| `elementary-vol2` | `workbook` | 25 | 2026-03-01 | complete |
 
-- `data/manifest.json`: 2 entries (one per type), both `"status": "complete"`
-- Page images (`data/elementary-vol1/*/\_pages/`) are present but can be gitignored
-- TOC files confirmed: both `data/elementary-vol1/textbook/toc.json` and `data/elementary-vol1/workbook/toc.json` have `toc_confirmed: true`
+- `data/manifest.json`: 4 entries (two volumes × two types), all `"status": "complete"`
+- Page images (`data/<volume>/*/\_pages/`) are present but can be gitignored
+- TOC files confirmed for all four volume/type combinations (`toc_confirmed: true`)
 
 ---
 
 ## Test Coverage
 
-13 test files, **75 tests total, all passing** (`uv run pytest tests/`):
+13 test files, **80 tests total, all passing** (`uv run pytest tests/`):
 
 | Test File | Tests | Module Covered | Strategy |
 |---|---|---|---|
@@ -94,7 +101,7 @@ The full end-to-end pipeline is **complete and operational**:
 | `test_mcp_readers.py` | 5 | `readers.py` | Real file I/O, `tmp_path` |
 | `test_mcp_question_parser.py` | 5 | `question_parser.py` | Pure function, no mocks |
 | `test_mcp_lookup_word.py` | 3 | `dictionary.py` | Mock `_jam` singleton |
-| `test_mcp_server.py` | 4 | `server.py` | Integration with fixture data (`tmp_path`) |
+| `test_mcp_server.py` | 10 | `server.py` | Tools, prompts, flow tools, integration with `tmp_path` |
 
 ---
 

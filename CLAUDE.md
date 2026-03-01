@@ -66,12 +66,21 @@ One-time processing script with two sequential steps, both invoked via `indexer/
 
 Implemented in Python using the official `mcp` SDK. Four modules:
 
-- `server.py` — entry point; registers all tools and starts stdio transport via `main()`
+- `server.py` — entry point; registers all tools/prompts and starts stdio transport via `main()`
 - `readers.py` — file reading utilities: `read_manifest()`, `read_toc()`, `read_lesson()`
 - `question_parser.py` — parses workbook question structure with full-width alias normalization
 - `dictionary.py` — local JMDict lookup via `jamdict` (offline, no HTTP required)
 
-Exposes six tools:
+Module-level instruction helpers in `server.py` (single source of truth for workflow text):
+
+- `_browse_lesson_flow_instructions()` — discovery-based browse workflow (no params; used by `browse_lesson_flow` tool)
+- `_practice_lesson_flow_instructions()` — discovery-based practice workflow (no params; used by `practice_lesson_flow` tool)
+- `_browse_lesson_instructions(volume, lesson)` — parameterized browse workflow (used by `browse_lesson` prompt)
+- `_practice_lesson_instructions(volume, lesson)` — parameterized practice workflow (used by `practice_lesson` prompt)
+
+Exposes 8 tools + 2 prompts:
+
+**Data tools:**
 
 | Tool | Signature | Purpose |
 |------|-----------|---------|
@@ -81,6 +90,20 @@ Exposes six tools:
 | `get_question_structure` | `(volume, lesson)` | Returns workbook question metadata: total 問題 count and sub-question counts |
 | `get_question` | `(volume, lesson, question_num)` | Returns a single 問題's full content |
 | `lookup_word` | `(word)` | Looks up a Japanese word in JMDict, returns reading / POS / meanings |
+
+**Workflow-flow tools** (call these to start a session; model discovers correct volume/lesson via tools):
+
+| Tool | Signature | Purpose |
+|------|-----------|---------|
+| `browse_lesson_flow` | `()` | Returns instructions: call list_volumes→list_lessons→get_lesson, present all sections in order |
+| `practice_lesson_flow` | `()` | Returns instructions: call list_volumes→list_lessons→get_question_structure→get_question per 問題 |
+
+**Prompts** (for MCP clients that support prompts as slash commands, e.g. Zed; volume/lesson supplied by user):
+
+| Prompt | Signature | Purpose |
+|--------|-----------|---------|
+| `browse_lesson` | `(volume, lesson)` | Parameterized browse workflow injected at conversation start |
+| `practice_lesson` | `(volume, lesson)` | Parameterized practice workflow injected at conversation start |
 
 **Starting the MCP server:**
 
