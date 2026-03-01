@@ -7,6 +7,9 @@ requires-python = ">=3.12"
 dependencies = [
     "pymupdf>=1.24.0",
     "openai>=1.0.0",
+    "mcp>=1.0.0",
+    "jamdict",
+    "jamdict-data",
 ]
 
 [dependency-groups]
