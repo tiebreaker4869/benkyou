@@ -43,9 +43,9 @@ def create_server(data_dir: str = "data") -> FastMCP:
             "including structured content for lesson reading and review."
         )
     )
-    def get_lesson(volume: str, lesson: int, type: str) -> str:
+    def get_lesson(volume: str, lesson: int, book_type: str) -> str:
         """Return full lesson markdown content."""
-        return read_lesson(data_dir, volume, type, lesson)
+        return read_lesson(data_dir, volume, book_type, lesson)
 
     @server.tool(
         description=(

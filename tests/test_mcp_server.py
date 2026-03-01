@@ -1,6 +1,7 @@
 """Integration tests for mcp_server/server.py."""
 
 import asyncio
+import json
 
 from mcp_server.server import create_server, parse_args
 
@@ -34,22 +35,38 @@ def test_all_tools_have_meaningful_descriptions():
     assert "Japanese word in JMDict" in descriptions["lookup_word"]
 
 
-def test_list_volumes_integration():
-    server = create_server(data_dir="data")
+def test_list_volumes_integration(tmp_path):
+    manifest = [
+        {
+            "volume": "elementary-vol1",
+            "type": "textbook",
+            "lessons": 1,
+            "status": "complete",
+        }
+    ]
+    (tmp_path / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False), encoding="utf-8"
+    )
+
+    server = create_server(data_dir=str(tmp_path))
     _, payload = asyncio.run(server.call_tool("list_volumes", {}))
     result = payload["result"]
     assert isinstance(result, list)
-    assert len(result) > 0
+    assert len(result) == 1
     assert "volume" in result[0]
     assert "type" in result[0]
 
 
-def test_get_lesson_integration():
-    server = create_server(data_dir="data")
+def test_get_lesson_integration(tmp_path):
+    lesson_path = tmp_path / "elementary-vol1" / "textbook" / "lesson_01.md"
+    lesson_path.parent.mkdir(parents=True, exist_ok=True)
+    lesson_path.write_text("# 第1課\n\n内容", encoding="utf-8")
+
+    server = create_server(data_dir=str(tmp_path))
     _, payload = asyncio.run(
         server.call_tool(
             "get_lesson",
-            {"volume": "elementary-vol1", "lesson": 1, "type": "textbook"},
+            {"volume": "elementary-vol1", "lesson": 1, "book_type": "textbook"},
         )
     )
     lesson_md = payload["result"]

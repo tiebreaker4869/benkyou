@@ -1,6 +1,6 @@
 """Extract one lesson markdown from page images via VLM."""
 
-import base64
+from indexer.image_utils import encode_image
 
 
 TEXTBOOK_PAGE_PROMPT = """\
@@ -93,11 +93,6 @@ Rules:
 """
 
 
-def _encode_image(path: str) -> str:
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode("utf-8")
-
-
 def extract_lesson(
     image_paths: list[str],
     lesson: dict,
@@ -124,7 +119,7 @@ def extract_lesson(
         image_parts = [
             {
                 "type": "image_url",
-                "image_url": {"url": f"data:image/png;base64,{_encode_image(image_path)}"},
+                "image_url": {"url": f"data:image/png;base64,{encode_image(image_path)}"},
             }
         ]
         response = client.chat.completions.create(

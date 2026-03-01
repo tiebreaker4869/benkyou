@@ -8,8 +8,31 @@
 
 The full end-to-end pipeline is **complete and operational**:
 
-- **Indexer**: All 8 modules implemented and tested. `elementary-vol1` (textbook + workbook, 25 lessons each) has been fully processed and written to `data/`.
+- **Indexer**: All 9 modules implemented and tested. `elementary-vol1` (textbook + workbook, 25 lessons each) has been fully processed and written to `data/`.
 - **MCP Server**: All 6 tools implemented, registered, and tested. Server starts over stdio transport and is ready to connect to Claude Desktop.
+
+### Refactor Progress (from `docs/refactor.md`)
+
+- **Checkpoint 1 (completed)**:
+  - Renamed MCP tool parameter `get_lesson(..., type)` to `get_lesson(..., book_type)` to avoid shadowing Python builtin.
+  - Reworked `tests/test_mcp_server.py` integration tests to use `tmp_path` fixture data instead of real `data/` directory.
+  - Verified with `uv run pytest tests/test_mcp_server.py -v` (5 passed).
+- **Checkpoint 2 (completed)**:
+  - Extracted shared base64 image encoding into `indexer/image_utils.py::encode_image`.
+  - Removed duplicated `_encode_image` implementation from `indexer/toc_extractor.py` and `indexer/lesson_extractor.py`.
+  - Verified with `uv run pytest tests/test_toc_extractor.py tests/test_lesson_extractor.py tests/test_run_toc.py tests/test_run_index.py -v` (33 passed).
+- **Checkpoint 3 (completed)**:
+  - Extracted `_split_questions(markdown)` in `mcp_server/question_parser.py` as the shared question-block split path.
+  - Updated `parse_question_structure` and `extract_question` to delegate to shared split logic without changing public behavior.
+  - Verified with `uv run pytest tests/test_mcp_question_parser.py -v` (5 passed).
+- **Checkpoint 4 (completed)**:
+  - Updated `test_run_index_retries_transient_failure` to pass `retry_base_delay=0` so retries do not sleep during tests.
+  - Switched `mcp_server/dictionary.py` from import-time `Jamdict()` initialization to lazy `_get_jam()` initialization.
+  - Migrated `indexer/run.py` page listing in `run_index()` to `Path(pages_dir).glob("*.png")`.
+  - Verified with:
+    - `uv run pytest tests/test_run_index.py::test_run_index_retries_transient_failure -v` (1 passed)
+    - `uv run pytest tests/test_mcp_lookup_word.py -v` (3 passed)
+    - `uv run pytest tests/ -v` (75 passed)
 
 ---
 
@@ -21,6 +44,7 @@ The full end-to-end pipeline is **complete and operational**:
 |---|---|---|
 | `run.py` | Complete | CLI entry point; orchestrates `run_toc()` and `run_index()` |
 | `pdf_to_images.py` | Complete | Renders PDF pages to PNG via `pymupdf` at 150 DPI |
+| `image_utils.py` | Complete | Shared image helpers (`encode_image`) for VLM payloads |
 | `toc_extractor.py` | Complete | Sends TOC page images to VLM; returns structured lesson list |
 | `toc_writer.py` | Complete | Writes `toc.json` with `toc_confirmed: false` |
 | `toc_reader.py` | Complete | Reads and validates `toc.json`; aborts if not confirmed |
@@ -35,7 +59,7 @@ The full end-to-end pipeline is **complete and operational**:
 | `server.py` | Complete | Registers 6 tools via FastMCP; starts stdio transport |
 | `readers.py` | Complete | File readers for manifest, toc, and lesson markdown |
 | `question_parser.py` | Complete | Parses workbook structure; normalizes full-width characters |
-| `dictionary.py` | Complete | Offline JMDict lookup via `jamdict` singleton |
+| `dictionary.py` | Complete | Offline JMDict lookup via lazy `jamdict` singleton |
 
 ---
 
@@ -70,7 +94,7 @@ The full end-to-end pipeline is **complete and operational**:
 | `test_mcp_readers.py` | `readers.py` | Real file I/O, `tmp_path` |
 | `test_mcp_question_parser.py` | `question_parser.py` | Pure function, no mocks |
 | `test_mcp_lookup_word.py` | `dictionary.py` | Mock `_jam` singleton |
-| `test_mcp_server.py` | `server.py` | Integration, partial real `data/` |
+| `test_mcp_server.py` | `server.py` | Integration with fixture data (`tmp_path`) |
 
 ---
 

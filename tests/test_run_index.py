@@ -78,6 +78,7 @@ def test_run_index_aborts_when_toc_not_confirmed(tmp_path, capsys):
         page_base=0,
         client=client,
         model="gpt-5-mini-2025-08-07",
+        retry_base_delay=0,
     )
 
     out = capsys.readouterr()

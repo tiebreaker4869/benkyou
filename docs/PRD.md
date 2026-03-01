@@ -185,9 +185,9 @@ title: これはほんです
 **`list_lessons(volume)`**
 - 遍历指定册目录，返回所有课编号和标题列表
 
-**`get_lesson(volume, lesson, type)`**
+**`get_lesson(volume, lesson, book_type)`**
 - 返回指定课的完整 Markdown 内容
-- type：`textbook` / `workbook`
+- book_type：`textbook` / `workbook`
 - 用于场景一整课浏览，以及场景二开始前加载课文上下文
 
 **`get_question_structure(volume, lesson)`**
@@ -217,7 +217,7 @@ title: これはほんです
 
 **场景一：整课浏览**
 > 用户：「我要看初级上册第3课」
-> Claude：调用 `get_lesson(volume=elementary-vol1, lesson=3, type=textbook)`，一次性展示完整课程内容，包含词汇、文型、例文、会话、语法各节，用户可随时追问
+> Claude：调用 `get_lesson(volume=elementary-vol1, lesson=3, book_type=textbook)`，一次性展示完整课程内容，包含词汇、文型、例文、会话、语法各节，用户可随时追问
 
 **场景二：练习批改**
 > 用户：「我要做初级上册第3课的练习」
@@ -246,7 +246,7 @@ MCP Server 侧无需改动，客户端独立迭代。
 
 **包含：**
 - Indexer 脚本（含 toc 确认步骤、manifest 生成）
-- MCP Server：5 个 tools
+- MCP Server：6 个 tools
 - Claude Desktop 配置文件
 
 **不包含（后续迭代）：**
@@ -267,3 +267,21 @@ MCP Server 侧无需改动，客户端独立迭代。
 | P1   | MCP Server 搭建 + tools 实现（含 section 别名归一化）                |
 | P1   | Claude Desktop 配置接入                                                   |
 | P2   | 端到端测试                                                                |
+
+---
+
+## 十、重构实施进度（2026-03）
+
+- **Checkpoint 1（已完成）**
+  - MCP `get_lesson` 参数从 `type` 重命名为 `book_type`，避免与 Python 内置名冲突。
+  - `test_mcp_server.py` 集成测试改为基于 `tmp_path` 构造夹具数据，不再依赖真实 `data/` 目录。
+- **Checkpoint 2（已完成）**
+  - 新增 `indexer/image_utils.py`，抽取共享 `encode_image(path)`。
+  - `toc_extractor.py` 与 `lesson_extractor.py` 移除重复 `_encode_image` 实现并统一调用共享方法。
+- **Checkpoint 3（已完成）**
+  - 在 `mcp_server/question_parser.py` 中抽取 `_split_questions(markdown)` 作为统一题块拆分逻辑。
+  - `parse_question_structure` 与 `extract_question` 复用同一解析路径，保持对外接口与返回格式不变。
+- **Checkpoint 4（已完成）**
+  - `tests/test_run_index.py::test_run_index_retries_transient_failure` 通过 `retry_base_delay=0` 消除测试等待。
+  - `mcp_server/dictionary.py` 改为懒加载 `Jamdict`，避免模块导入时副作用。
+  - `indexer/run.py` 在 `run_index()` 中将 PNG 列举逻辑迁移为 `Path.glob("*.png")`。

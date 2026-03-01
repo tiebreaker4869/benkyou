@@ -5,6 +5,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
+from pathlib import Path
 
 from openai import OpenAI
 
@@ -106,11 +107,7 @@ def run_index(
         print(f"Error: pages directory not found: {pages_dir}", file=sys.stderr)
         return
 
-    all_pages = sorted(
-        os.path.join(pages_dir, f)
-        for f in os.listdir(pages_dir)
-        if f.lower().endswith(".png")
-    )
+    all_pages = sorted(str(p) for p in Path(pages_dir).glob("*.png"))
     if not all_pages:
         print(f"Error: no PNG pages found in {pages_dir}", file=sys.stderr)
         return

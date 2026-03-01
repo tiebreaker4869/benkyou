@@ -39,6 +39,13 @@ Run the test suite:
 uv run pytest tests/
 ```
 
+### Refactor Progress
+
+- **Checkpoint 1 (done)**: Renamed MCP `get_lesson` parameter from `type` to `book_type`; updated server integration tests to use `tmp_path` fixture data instead of real `data/`.
+- **Checkpoint 2 (done)**: Extracted shared image base64 encoding into `indexer/image_utils.py::encode_image` and removed duplicated encoder code from extractor modules.
+- **Checkpoint 3 (done)**: Refactored `mcp_server/question_parser.py` by extracting shared `_split_questions(markdown)` and making both public parser functions reuse the same split path.
+- **Checkpoint 4 (done)**: Removed retry test sleep by injecting `retry_base_delay=0`, made `jamdict` initialization lazy in `mcp_server/dictionary.py`, and migrated `indexer/run.py` page listing to `pathlib.Path.glob`.
+
 ---
 
 ## Indexer: PDF → Markdown
@@ -236,11 +243,11 @@ Returns the full Markdown content for a single lesson.
 |---|---|---|
 | `volume` | `string` | Volume identifier, e.g. `"elementary-vol1"` |
 | `lesson` | `integer` | Lesson number, e.g. `1` |
-| `type` | `string` | `"textbook"` or `"workbook"` |
+| `book_type` | `string` | `"textbook"` or `"workbook"` |
 
 **Example call:**
 ```
-get_lesson(volume="elementary-vol1", lesson=1, type="textbook")
+get_lesson(volume="elementary-vol1", lesson=1, book_type="textbook")
 ```
 
 **Example output** (truncated):

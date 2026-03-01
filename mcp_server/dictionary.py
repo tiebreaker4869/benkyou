@@ -2,12 +2,20 @@
 
 from jamdict import Jamdict
 
-_jam = Jamdict()
+_jam: Jamdict | None = None
+
+
+def _get_jam() -> Jamdict:
+    """Lazily initialize and return the Jamdict singleton."""
+    global _jam
+    if _jam is None:
+        _jam = Jamdict()
+    return _jam
 
 
 def lookup_word(word: str) -> dict | None:
     """Lookup one word and return normalized dictionary fields."""
-    result = _jam.lookup(word)
+    result = _get_jam().lookup(word)
     if not result.entries:
         return None
 

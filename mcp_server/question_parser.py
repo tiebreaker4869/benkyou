@@ -14,17 +14,26 @@ def normalize(text: str) -> str:
     return text.translate(FULLWIDTH_DIGITS).translate(FULLWIDTH_PARENS)
 
 
-def parse_question_structure(markdown: str) -> dict:
-    """Parse workbook markdown and return question/sub-question structure."""
+def _split_questions(markdown: str) -> list[tuple[int, str]]:
+    """Split workbook markdown into per-question blocks."""
     normalized = normalize(markdown)
     matches = list(QUESTION_HEADER_RE.finditer(normalized))
-    questions: list[dict] = []
+    blocks: list[tuple[int, str]] = []
 
     for i, match in enumerate(matches):
         question_num = int(match.group(1))
         start = match.start()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(normalized)
-        block = normalized[start:end]
+        blocks.append((question_num, normalized[start:end]))
+
+    return blocks
+
+
+def parse_question_structure(markdown: str) -> dict:
+    """Parse workbook markdown and return question/sub-question structure."""
+    questions: list[dict] = []
+
+    for question_num, block in _split_questions(markdown):
         sub_count = len(SUBQUESTION_HEADER_RE.findall(block))
         questions.append({"num": question_num, "sub_count": sub_count})
 
@@ -33,15 +42,9 @@ def parse_question_structure(markdown: str) -> dict:
 
 def extract_question(markdown: str, question_num: int) -> str:
     """Extract one full question block by question number."""
-    normalized = normalize(markdown)
-    matches = list(QUESTION_HEADER_RE.finditer(normalized))
-
-    for i, match in enumerate(matches):
-        current_num = int(match.group(1))
+    for current_num, block in _split_questions(markdown):
         if current_num == question_num:
-            start = match.start()
-            end = matches[i + 1].start() if i + 1 < len(matches) else len(normalized)
-            return normalized[start:end].strip()
+            return block.strip()
 
     raise ValueError(f"Question {question_num} not found")
 

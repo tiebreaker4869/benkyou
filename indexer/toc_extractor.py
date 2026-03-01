@@ -1,7 +1,8 @@
-import base64
 import json
 
 from openai import OpenAI
+
+from indexer.image_utils import encode_image
 
 SYSTEM_PROMPT = """\
 You are a precise OCR assistant specializing in Japanese textbooks.
@@ -28,11 +29,6 @@ Rules:
 """
 
 
-def _encode_image(path: str) -> str:
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode("utf-8")
-
-
 def extract_toc(
     toc_image_paths: list[str],
     client: OpenAI,
@@ -42,7 +38,7 @@ def extract_toc(
     image_parts = [
         {
             "type": "image_url",
-            "image_url": {"url": f"data:image/png;base64,{_encode_image(p)}"},
+            "image_url": {"url": f"data:image/png;base64,{encode_image(p)}"},
         }
         for p in toc_image_paths
     ]
