@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 import fitz  # pymupdf
 import pytest
 
-from indexer.toc_extractor import extract_toc
+from indexer.toc_extractor import SYSTEM_PROMPT, extract_toc
 
 
 @pytest.fixture()
@@ -167,3 +167,15 @@ def test_multiple_images_all_sent(tmp_path):
         if isinstance(part, dict) and part.get("type") == "image_url"
     )
     assert image_count == 2
+
+
+def test_prompt_requires_inclusive_page_end():
+    prompt = SYSTEM_PROMPT.lower()
+    assert "inclusive" in prompt
+    assert "page_end" in prompt
+
+
+def test_prompt_requires_infer_end_from_next_start():
+    prompt = SYSTEM_PROMPT.lower()
+    assert "infer" in prompt
+    assert "next lesson start page minus 1" in prompt

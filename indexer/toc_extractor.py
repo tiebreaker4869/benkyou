@@ -18,7 +18,11 @@ Return format (JSON object, no markdown):
 Rules:
 - "lesson" is an integer lesson number
 - "title" is the full lesson title as it appears in the TOC (keep Japanese)
-- "page_start" and "page_end" are integers (the page range shown in the TOC)
+- "page_start" and "page_end" are integers and represent an inclusive page range
+- "page_end" must be >= "page_start"
+- If the TOC lists only lesson start pages, infer "page_end" using the next lesson start page minus 1
+- For the last lesson, set "page_end" to the final page of that lesson inferred from TOC context
+- Adjacent lessons must not overlap in page ranges
 - Include every lesson listed in the TOC
 - Output only the JSON object, no explanations
 """
