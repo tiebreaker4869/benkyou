@@ -113,6 +113,20 @@ data/
 
 ---
 
+## Demo
+
+**Browse a lesson** — ask Claude to walk you through the lesson content, vocabulary, and grammar points:
+
+![Browse lesson demo](assets/demo-learn.png)
+
+**Practice with workbook exercises** — ask Claude to run through the workbook questions interactively:
+
+![Practice lesson demo](assets/demo-practice.png)
+
+**Inline dictionary lookup** — agent can look up any Japanese word on the spot via a bundled offline JMDict dictionary, so you never have to leave the conversation to check a word.
+
+---
+
 ## MCP Server
 
 The MCP server exposes lesson data, dictionary lookup, and workflow-flow tools to any MCP-compatible client (Claude Desktop, Codex Desktop, Zed, Cursor, etc.) over stdio transport.
