@@ -8,6 +8,10 @@ PDF → indexer/ (VLM OCR) → data/ (Markdown lessons) → MCP Server → Claud
 
 ---
 
+> **Disclaimer:** This project is mostly vibe-coded for personal use and still has plenty of rough edges. If you run into friction or have ideas for improving the experience, feel free to open an issue — feedback is welcome.
+
+---
+
 ## Prerequisites
 
 - **Python 3.12+**
@@ -75,6 +79,7 @@ python indexer/run.py \
   --volume elementary-vol1 \
   --type textbook \
   --step index
+  --page-base 7 # number of pages before logical page 1 (e.g. cover, TOC pages); aligns PDF page numbers with the page numbers printed in the book
 ```
 
 Repeat both steps with `--type workbook` for the workbook volume.
